@@ -205,13 +205,13 @@ class Interfaz:                                                    #INTERFAZZZZZ
 
         self.root = tkinter.Tk()
         self.root.title("PYTHUNAL")
-        self.root.geometry("500x400")
+        self.root.geometry("500x500")
         
         self.crear_interfaz()
     
     def crear_interfaz(self):
-        titulo = tkinter.Label(self.root, text="Añadir Producto al Inventario", 
-                         font=("times new roman", 16, "bold"))
+        titulo = tkinter.Label(self.root, text="Añadir producto al inventario", 
+                         font=("times new roman", 18, "bold"))
         titulo.pack(pady=10)
 
         frame_campos = tkinter.Frame(self.root)
