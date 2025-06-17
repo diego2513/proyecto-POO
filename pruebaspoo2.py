@@ -43,101 +43,52 @@ class Producto:
         return self.cantidad <= self.stock_minimo
 
 class Ingrediente(Producto):
-    def __init__(self, codigo, nombre, precio, cantidad, unidad_medid, familia, ubicacion, fecha_ingreso, fecha_vencimiento, agotado, stock_minimo, proveedor:str, es_refrigerado:bool ):
+    def __init__(self, codigo, nombre, precio, cantidad, unidad_medid, familia, ubicacion, fecha_ingreso, fecha_vencimiento, agotado, stock_minimo, proveedor:str):
         super().__init__(codigo, nombre, precio, cantidad, unidad_medid, familia, ubicacion, fecha_ingreso, fecha_vencimiento, agotado,stock_minimo)
         self.proveedor= proveedor
-        self.es_refrigerado= es_refrigerado
 
     def mostrar_info(self)-> str:
          info_base = super().mostrar_info()
          info_nueva = (
-        f"\nProveedor: {self.proveedor}\n"
-        f"Requiere refrigeración: {'Sí' if self.es_refrigerado else 'No'}")
+        f"\nProveedor: {self.proveedor}\n")
          return info_base + info_nueva
-
-    def requiere_refrigerar(self)-> bool:
-        return self.es_refrigerado
     
-    def se_puede_usar(self) -> bool:
+    def se_puede_usar(self) -> bool:  # Indica si el producto aun sirve o no 
         if self.fecha_vencimiento is None:
             return True
         return self.fecha_vencimiento >= date.today()
 
-class Bebida(Producto):
-    def __init__(self, codigo, nombre, precio, cantidad, unidad_medid, familia, ubicacion, fecha_ingreso, fecha_vencimiento, agotado,stock_minimo, es_alcoholica:bool):
-        super().__init__(codigo, nombre, precio, cantidad, unidad_medid, familia, ubicacion, fecha_ingreso, fecha_vencimiento, agotado, stock_minimo)
-        self.es_alcoholica= es_alcoholica
-
-    def mostrar_info(self)-> str:
-        info_base= super().mostrar_info()
-        info_nueva= f"\nAlcohólica: {'Sí' if self.es_alcoholica else 'No'}"
-        return info_base + info_nueva
-    
-class Empaque(Producto):
-    def __init__(self, codigo, nombre, precio, cantidad, unidad_medid, familia, ubicacion, fecha_ingreso, fecha_vencimiento, agotado, stock_minimo, material:str):
-        super().__init__(codigo, nombre, precio, cantidad, unidad_medid, familia, ubicacion, fecha_ingreso, fecha_vencimiento, agotado, stock_minimo)
-        self.material= material
-
-    def mostrar_info(self)-> str:
-        info_base= super().mostrar_info()
-        info_nueva= f"\nMaterial: {self.material}"
-        return info_base + info_nueva
-
-class Utencilio(Producto):
-    def __init__(self, codigo, nombre, precio, cantidad, unidad_medid, familia, ubicacion, fecha_ingreso, fecha_vencimiento, agotado, stock_minimo, tipo:str):
-        super().__init__(codigo, nombre, precio, cantidad, unidad_medid, familia, ubicacion, fecha_ingreso, fecha_vencimiento, agotado, stock_minimo)
-        self.tipo= tipo
-
-    def mostrar_info(self)-> str:
-        info_base= super().mostrar_info()
-        info_nueva= f"\nTipo: {self.tipo}"
-        return info_base + info_nueva
-       
-class Aperitivos(Producto):
-    def __init__(self, codigo, nombre, precio, cantidad, unidad_medid, familia, ubicacion, fecha_ingreso, fecha_vencimiento, agotado, stock_minimo, tipo:str):
-        super().__init__(codigo, nombre, precio, cantidad, unidad_medid, familia, ubicacion, fecha_ingreso, fecha_vencimiento, agotado, stock_minimo)
-        self.tipo= tipo
-
-    def mostrar_info(self)-> str:
-        info_base= super().mostrar_info()
-        info_nueva= f"\nTipo: {self.tipo}"
-        return info_base + info_nueva
-
-class Postres(Producto):
-    def __init__(self, codigo, nombre, precio, cantidad, unidad_medid, familia, ubicacion, fecha_ingreso, fecha_vencimiento, agotado, stock_minimo, tipo_postre:str):
-        super().__init__(codigo, nombre, precio, cantidad, unidad_medid, familia, ubicacion, fecha_ingreso, fecha_vencimiento, agotado, stock_minimo)
-        self.tipo_postre= tipo_postre
-
-    def mostrar_info(self)-> str:
-        info_base= super().mostrar_info()
-        info_nueva= f"\Postre: {self.tipo_postre}"
-        return info_base + info_nueva
- 
-class Productoslimpieza(Producto):
-    def __init__(self, codigo, nombre, precio, cantidad, unidad_medid, familia, ubicacion, fecha_ingreso, fecha_vencimiento, agotado, stock_minimo, uso:str):
-        super().__init__(codigo, nombre, precio, cantidad, unidad_medid, familia, ubicacion, fecha_ingreso, fecha_vencimiento, agotado, stock_minimo)
-        self.uso= uso
-
-    def mostrar_info(self)-> str:
-        info_base= super().mostrar_info()
-        info_nueva= f"\n Tipo de uso: {self.uso}"
-        return info_base + info_nueva
-
-class Productofinal(Producto):
+class Productofinal(Producto):   #
     def __init__(self, codigo, nombre, precio, cantidad, unidad_medid, familia, ubicacion, fecha_ingreso, fecha_vencimiento, agotado, stock_minimo, receta: list[Ingrediente]):
         super().__init__(codigo, nombre, precio, cantidad, unidad_medid, familia, ubicacion, fecha_ingreso, fecha_vencimiento, agotado, stock_minimo)
         self.receta= receta 
-        pass 
+
+    def mostrar_info(self) -> str:
+         info_base = super().mostrar_info()
+         ingredientes = ", ".join(ins.nombre for ins in self.receta)
+         return f"{info_base}\nIngredientes: {ingredientes}"
+    def aplicar_descuento(self):  #para mas adelante
+        pass
+    def restablecer_precio(self):
+        pass
+    def aplicar_promocion(self):
+        pass
+    def restar_ingredientes(self):  # Se conecta con el inventario
+        for insumo in self.receta:
+             print(f"- Consumir: {insumo.nombre}")
 
 class Movimiento:
     def __init__(self, tipo: str, producto: Producto, cantidad:int, fecha, usuario:str, motivo:str):
         pass
     def mostrar_detalle(self)-> str:
         pass 
+
 class Inventario:                               #def inventario en sqlite
     def __init__(self):
         self.productos:list[Producto]=[]
-        self.movimientos:list[Movimiento]= []
+        self.movimientos:list[Movimiento]= [] # para implementar luego
+        self.conn= None
+        self.cursor= None
 
     def database(self):                                 #def inventario en sqlite
         self.conn = sqlite3.connect('BOD.db')
@@ -150,12 +101,18 @@ class Inventario:                               #def inventario en sqlite
             precio INTEGER,
             cantidad INTEGER,
             medida TEXT,
-            fechaingreso TEXT
+            familia,
+            ubicacion,
+            fechaingreso TEXT,
+            fechavencimiento TEXT,
+            proveedor TEXT,
+            stock_minimo INTEGER,
+            agotado INTEGER
             )"""
         )
         self.conn.commit()
-        
-        datos_ejemplo = [
+        # Para pruebas, pero tal vez lo omitamos
+        """datos_ejemplo = [         
                 ('1234', 'Carne de Hmaburguesa', 5000, 250, 'kg', '2025-06-20'),
                 ('2234', 'Salchicha', 4000, 150, 'Unidad', '2025-12-15'),
                 ('2224', 'Soda', 200, 2000, 'L', '2025-06-18'),
@@ -167,36 +124,64 @@ class Inventario:                               #def inventario en sqlite
             INSERT INTO BOD (codigo, name, precio, cantidad, medida, fechaingreso)
             VALUES (?, ?, ?, ?, ?, ?)
             ''', datos_ejemplo)
-        self.conn.commit()
+        self.conn.commit()"""
         
-
-    def agregar_producto(self, codigo, nombre, precio, cantidad, medida, fecha):
-        """Método para agregar un producto a la base de datos"""
+    def agregar_producto(self, producto: Ingrediente): # Para agregar producto a la base de datos y lista 
         try:
-            if not self.conn:
+            if not hasattr(self, 'conn'):
                 self.database()
-            
-            # Verificar si el producto ya existe
-            self.cursor.execute("SELECT codigo FROM BOD WHERE codigo = ?", (codigo,))
+
+            self.cursor.execute("SELECT codigo FROM BOD WHERE codigo = ?", (producto.codigo,))
             if self.cursor.fetchone():
-                return False  # El producto ya existe
-            
-            # Insertar el nuevo producto
+                return False
             self.cursor.execute('''
-                INSERT INTO BOD (codigo, name, precio, cantidad, medida, fechaingreso)
-                VALUES (?, ?, ?, ?, ?, ?)
-                ''', (codigo, nombre, precio, cantidad, medida, fecha))
-            
+            INSERT INTO BOD (
+                codigo, nombre, precio, cantidad, unidad_medida, familia,
+                ubicacion, fecha_ingreso, fecha_vencimiento, proveedor,
+                stock_minimo, agotado
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (
+            producto.codigo,
+            producto.nombre,
+            producto.precio,
+            producto.cantidad,
+            producto.unidad_medida,
+            producto.familia,
+            producto.ubicacion,
+            producto.fecha_ingreso.isoformat(),
+            producto.fecha_vencimiento.isoformat() if producto.fecha_vencimiento else None,
+            producto.proveedor,
+            producto.stock_minimo,
+            int(producto.agotado)
+        ))
             self.conn.commit()
+            self.productos.append(producto)
             return True
-        except sqlite3.Error as e:
-            print(f"Error de base de datos: {e}")
-            return False
         except Exception as e:
-            print(f"Error: {e}")
+            print(f"Error al agregar producto: {e}")
             return False
         
-        
+    def cargar_productos_BD(self):      # Para cargar productos desde la base de datos 
+        self.cursor.execute("SELECT * FROM BOD")
+        filas = self.cursor.fetchall()
+
+        for fila in filas:
+            producto = Ingrediente(
+            codigo=fila[0],
+            nombre=fila[1],
+            precio=fila[2],
+            cantidad=fila[3],
+            unidad_medida=fila[4],
+            familia=fila[5],
+            ubicacion=fila[6],
+            fecha_ingreso=date.fromisoformat(fila[7]),
+            fecha_vencimiento=date.fromisoformat(fila[8]) if fila[8] else None,
+            agotado=bool(fila[11]),
+            stock_minimo=fila[10],
+            proveedor=fila[9]
+            
+        )
+        self.productos.append(producto)
 
 class Interfaz:                                                    #INTERFAZZZZZZZZZZZZZZZZZZZZZZZZZZZ
     def __init__(self):
@@ -205,13 +190,13 @@ class Interfaz:                                                    #INTERFAZZZZZ
 
         self.root = tkinter.Tk()
         self.root.title("PYTHUNAL")
-        self.root.geometry("500x500")
+        self.root.geometry("500x400")
         
         self.crear_interfaz()
     
     def crear_interfaz(self):
-        titulo = tkinter.Label(self.root, text="Añadir producto al inventario", 
-                         font=("times new roman", 18, "bold"))
+        titulo = tkinter.Label(self.root, text="Añadir Producto al Inventario", 
+                         font=("times new roman", 16, "bold"))
         titulo.pack(pady=10)
 
         frame_campos = tkinter.Frame(self.root)
@@ -250,7 +235,8 @@ class Interfaz:                                                    #INTERFAZZZZZ
                                bg="#FF0015", fg="white", 
                                font=("Arial", 12, "bold"),
                                width=15)
-        btn_agregar.pack(side="left", padx=10)
+        btn_agregar.pack(side="left", padx=10) 
+        
     def agregar_producto(self):
         """Función que se ejecuta al hacer clic en 'Añadir Producto'"""
         codigo = self.nty_codigo.get().strip()
