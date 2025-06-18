@@ -1,3 +1,3 @@
 DIAGRAMA DE CLASES 
 
-https://www.mermaidchart.com/app/projects/2d4cdfe7-5494-41d2-a8e1-4a7d4efd9384/diagrams/2744b662-8537-4757-92df-63ba8fc17ee7/share/invite/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkb2N1bWVudElEIjoiMjc0NGI2NjItODUzNy00NzU3LTkyZGYtNjNiYThmYzE3ZWU3IiwiYWNjZXNzIjoiRWRpdCIsImlhdCI6MTc1MDI2ODQ5M30.wqOMUjPZmTN5WXr6WpQG4ocQRkBlD-NSVgiE4EBeeGc
+![Uploading Editor _ Mermaid Chart-2025-06-18-174345.png…]()
