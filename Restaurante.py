@@ -3,10 +3,11 @@ from typing import Optional
 import sqlite3
 import tkinter
 from tkinter import ttk, messagebox
-#from modelos.producto import Producto 
+#from modelos.producto import Producto  Esto se pondrá en los módulos 
+#from producto import Producto  
 
 class Producto:
-    def __init__(self, codigo:str, nombre: str, precio:float, cantidad:int, unidad_medida:str, familia:str, ubicacion:str, fecha_ingreso:date, fecha_vencimiento:Optional[date], agotado:bool, stock_minimo: int = 5):
+    def __init__(self, codigo:str, nombre: str, precio:float, cantidad:int, unidad_medida:str, familia:str, ubicacion:str, fecha_ingreso:date, fecha_vencimiento:Optional[date], agotado:bool, stock_minimo: int):
         self.codigo= codigo
         self.nombre= nombre
         self.precio= precio
@@ -43,9 +44,10 @@ class Producto:
         return self.cantidad <= self.stock_minimo
 
 class Ingrediente(Producto):
-    def __init__(self, codigo, nombre, precio, cantidad, unidad_medid, familia, ubicacion, fecha_ingreso, fecha_vencimiento, agotado, stock_minimo, proveedor:str):
+    def __init__(self, codigo, nombre, precio, cantidad, unidad_medid, familia, ubicacion, fecha_ingreso, fecha_vencimiento, agotado, stock_minimo, proveedor:str, es_refrigerado:bool ):
         super().__init__(codigo, nombre, precio, cantidad, unidad_medid, familia, ubicacion, fecha_ingreso, fecha_vencimiento, agotado,stock_minimo)
         self.proveedor= proveedor
+        self.es_refrigerado= es_refrigerado
 
     def mostrar_info(self)-> str:
          info_base = super().mostrar_info()
@@ -67,21 +69,25 @@ class Productofinal(Producto):   #
          info_base = super().mostrar_info()
          ingredientes = ", ".join(ins.nombre for ins in self.receta)
          return f"{info_base}\nIngredientes: {ingredientes}"
-    def aplicar_descuento(self):  #para mas adelante
-        pass
-    def restablecer_precio(self):
-        pass
-    def aplicar_promocion(self):
-        pass
+    
     def restar_ingredientes(self):  # Se conecta con el inventario
         for insumo in self.receta:
              print(f"- Consumir: {insumo.nombre}")
 
-class Movimiento:
+class Movimiento:                # Para registrar y rastrear salidas y entradas del inventario ( Qué, cuando, cuánto, quién, por qué)
     def __init__(self, tipo: str, producto: Producto, cantidad:int, fecha, usuario:str, motivo:str):
-        pass
-    def mostrar_detalle(self)-> str:
+        self.tipo= tipo
+        self.producto= producto
+        self.cantidad= cantidad
+        self.fecha= fecha
+        self.usuario= usuario
+        self.motivo= motivo 
+    def mostrar_detalle(self)-> str:  # Indicará los detalles del movimiento
         pass 
+    def to_dict(self):   # Para convertir el movimiento en un diccionario 
+        pass 
+    def __str__(self):   # Para leer el mensaje 
+        pass
 
 class Inventario:                               #def inventario en sqlite
     def __init__(self):
@@ -111,20 +117,6 @@ class Inventario:                               #def inventario en sqlite
             )"""
         )
         self.conn.commit()
-        # Para pruebas, pero tal vez lo omitamos
-        """datos_ejemplo = [         
-                ('1234', 'Carne de Hmaburguesa', 5000, 250, 'kg', '2025-06-20'),
-                ('2234', 'Salchicha', 4000, 150, 'Unidad', '2025-12-15'),
-                ('2224', 'Soda', 200, 2000, 'L', '2025-06-18'),
-                ('2222', 'Pan', 200, 2000, 'Unidad', '2025-06-22'),
-                ('1233', 'Salsa', 200, 1200, 'Unidad', '2026-01-15')
-            ]
-            
-        self.cursor.executemany('''
-            INSERT INTO BOD (codigo, name, precio, cantidad, medida, fechaingreso)
-            VALUES (?, ?, ?, ?, ?, ?)
-            ''', datos_ejemplo)
-        self.conn.commit()"""
         
     def agregar_producto(self, producto: Ingrediente): # Para agregar producto a la base de datos y lista 
         try:
@@ -235,8 +227,7 @@ class Interfaz:                                                    #INTERFAZZZZZ
                                bg="#FF0015", fg="white", 
                                font=("Arial", 12, "bold"),
                                width=15)
-        btn_agregar.pack(side="left", padx=10) 
-        
+        btn_agregar.pack(side="left", padx=10)
     def agregar_producto(self):
         """Función que se ejecuta al hacer clic en 'Añadir Producto'"""
         codigo = self.nty_codigo.get().strip()
@@ -280,7 +271,7 @@ class Interfaz:                                                    #INTERFAZZZZZ
         pass
     def ver_inventario(self)-> str:
         pass 
-    def productos_porv_vencer(self) -> list[Producto]:
+    def productos_por_vencer(self) -> list[Producto]:
         pass
     def generar_alertas(self)-> list[str]:
         pass
