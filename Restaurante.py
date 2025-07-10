@@ -32,7 +32,7 @@ class Producto:
             f"Stock minimo:{self.stock_minimo}\n"
             f"Agotado: {'Sí' if self.agotado else 'No'}"
         )
-    def actualizar_stock(self, cantidad:int):
+    def actualizar_stock(self, cantidad:int): # Modifica la cantidad disponible de un producto
         self.cantidad += cantidad
         if self.cantidad <= 0:
             self.cantidad = 0
@@ -40,39 +40,59 @@ class Producto:
         else:
             self.agotado = False
 
-    def verificar_stock_minimo(self)-> bool:
+    def verificar_stock_minimo(self)-> bool:  # Compara la cantidad total con el stock_minimo correspondiente al producto
         return self.cantidad <= self.stock_minimo
 
-class Ingrediente(Producto):
-    def __init__(self, codigo, nombre, precio, cantidad, unidad_medid, familia, ubicacion, fecha_ingreso, fecha_vencimiento, agotado, stock_minimo, proveedor:str, es_refrigerado:bool ):
-        super().__init__(codigo, nombre, precio, cantidad, unidad_medid, familia, ubicacion, fecha_ingreso, fecha_vencimiento, agotado,stock_minimo)
-        self.proveedor= proveedor
-        self.es_refrigerado= es_refrigerado
+class Ingrediente(Producto): # Representa los insumos basicos para preparar productos finales
+    def __init__(self, codigo, nombre, precio, cantidad, unidad_medida, familia, ubicacion, fecha_ingreso, fecha_vencimiento, agotado, stock_minimo):
+        super().__init__(codigo, nombre, precio, cantidad, unidad_medida, familia, ubicacion, fecha_ingreso, fecha_vencimiento, agotado,stock_minimo)
 
-    def mostrar_info(self)-> str:
-         info_base = super().mostrar_info()
-         info_nueva = (
-        f"\nProveedor: {self.proveedor}\n")
-         return info_base + info_nueva
+    def dias_para_vencer(self)-> int | None:
+        if self.fecha_vencimiento is None:
+            return None
+        return (self.fecha_vencimiento - date.today()).days
+    
     
     def se_puede_usar(self) -> bool:  # Indica si el producto aun sirve o no 
         if self.fecha_vencimiento is None:
             return True
         return self.fecha_vencimiento >= date.today()
+    
+    def mostrar_info_detallada(self) -> str: # Muestra info detallada 
+        dias = self.dias_para_vencer()
+        estado = "útil" if self.se_puede_usar() else "No útil"
+        if dias is None:
+            texto = "No tiene fecha de vencimiento"
+        elif dias > 0:
+            texto = f"Faltan {dias} días para vencer"
+        elif dias == 0:
+            texto= "Vence Hoy"
+        else:
+            texto = f"Vencido hace {-dias} días"
+
+        return (f"{self.mostrar_info()}\n"
+                f"{texto}\n"
+                f"Estado: {estado}")
+
 
 class Productofinal(Producto):   #
-    def __init__(self, codigo, nombre, precio, cantidad, unidad_medid, familia, ubicacion, fecha_ingreso, fecha_vencimiento, agotado, stock_minimo, receta: list[Ingrediente]):
-        super().__init__(codigo, nombre, precio, cantidad, unidad_medid, familia, ubicacion, fecha_ingreso, fecha_vencimiento, agotado, stock_minimo)
-        self.receta= receta 
+    def __init__(self, codigo, nombre, precio, cantidad, unidad_medida, familia, ubicacion, fecha_ingreso, fecha_vencimiento, agotado, stock_minimo, receta: dict[Ingrediente, float]):
+        super().__init__(codigo, nombre, precio, cantidad, unidad_medida, familia, ubicacion, fecha_ingreso, fecha_vencimiento, agotado, stock_minimo)
+        self.receta= receta # Ahora es un diccionario: : Ingrediente → cantidad requerida 
 
-    def mostrar_info(self) -> str:
-         info_base = super().mostrar_info()
-         ingredientes = ", ".join(ins.nombre for ins in self.receta)
-         return f"{info_base}\nIngredientes: {ingredientes}"
+    def cantidad_requerida(self) -> str: # Para indicar ingredientes con su cantidad requerida para un producto final
+        if not self.receta:
+            return " Este producto no tiene receta asignada"
+        texto = "Receta:\n"
+        for ingrediente, cantidad in self.receta.items():
+            texto += f"- {ingrediente.nombre}: {cantidad} {ingrediente.unidad_medida}\n"
+        return texto.strip()
     
-    def restar_ingredientes(self):  # Se conecta con el inventario
-        for insumo in self.receta:
-             print(f"- Consumir: {insumo.nombre}")
+    def mostrar_info(self) -> str:
+        info_base = super().mostrar_info()
+        return f"{info_base}\n{self.cantidad_requerida()}"
+
+  
 
 class Movimiento:                # Para registrar y rastrear salidas y entradas del inventario ( Qué, cuando, cuánto, quién, por qué)
     def __init__(self, tipo: str, producto: Producto, cantidad:int, fecha, usuario:str, motivo:str):
@@ -82,17 +102,24 @@ class Movimiento:                # Para registrar y rastrear salidas y entradas 
         self.fecha= fecha
         self.usuario= usuario
         self.motivo= motivo 
+
     def mostrar_detalle(self)-> str:  # Indicará los detalles del movimiento
-        pass 
-    def to_dict(self):   # Para convertir el movimiento en un diccionario 
-        pass 
+               return (
+            f"Fecha: {self.fecha}\n"
+            f"Tipo: {self.tipo.title()}\n"
+            f"Producto: {self.producto.nombre} (Código: {self.producto.codigo})\n"
+            f"Cantidad: {self.cantidad} {self.producto.unidad_medida}\n"
+            f"Usuario: {self.usuario}\n"
+            f"Motivo: {self.motivo}"
+        )
+    
     def __str__(self):   # Para leer el mensaje 
-        pass
+        return self.mostrar_detalle()
 
 class Inventario:                               #def inventario en sqlite
     def __init__(self):
         self.productos:list[Producto]=[]
-        self.movimientos:list[Movimiento]= [] # para implementar luego
+        self.movimientos:list[Movimiento]= [] 
         self.conn= None
         self.cursor= None
 
@@ -102,36 +129,36 @@ class Inventario:                               #def inventario en sqlite
 
         self.cursor.execute(
             """CREATE TABLE IF NOT EXISTS BOD(
-            codigo INTEGER,
-            name TEXT,
-            precio INTEGER,
+            codigo TEXT PRIMARY KEY,
+            nombre TEXT,
+            precio REAL,
             cantidad INTEGER,
-            medida TEXT,
-            familia,
-            ubicacion,
-            fechaingreso TEXT,
-            fechavencimiento TEXT,
-            proveedor TEXT,
+            unidad_medida TEXT,
+            familia TEXT,
+            ubicacion TEXT,
+            fecha_ingreso TEXT,
+            fecha_vencimiento TEXT,
             stock_minimo INTEGER,
             agotado INTEGER
             )"""
         )
         self.conn.commit()
         
-    def agregar_producto(self, producto: Ingrediente): # Para agregar producto a la base de datos y lista 
+    def agregar_producto(self, producto: Producto): # Para agregar producto a la base de datos y lista 
         try:
-            if not hasattr(self, 'conn'):
+            if not self.conn:
                 self.database()
 
             self.cursor.execute("SELECT codigo FROM BOD WHERE codigo = ?", (producto.codigo,))
             if self.cursor.fetchone():
                 return False
+
             self.cursor.execute('''
             INSERT INTO BOD (
                 codigo, nombre, precio, cantidad, unidad_medida, familia,
-                ubicacion, fecha_ingreso, fecha_vencimiento, proveedor,
+                ubicacion, fecha_ingreso, fecha_vencimiento,
                 stock_minimo, agotado
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ''', (
             producto.codigo,
             producto.nombre,
@@ -142,7 +169,6 @@ class Inventario:                               #def inventario en sqlite
             producto.ubicacion,
             producto.fecha_ingreso.isoformat(),
             producto.fecha_vencimiento.isoformat() if producto.fecha_vencimiento else None,
-            producto.proveedor,
             producto.stock_minimo,
             int(producto.agotado)
         ))
@@ -154,6 +180,8 @@ class Inventario:                               #def inventario en sqlite
             return False
         
     def cargar_productos_BD(self):      # Para cargar productos desde la base de datos 
+        if not self.conn:
+            self.database()
         self.cursor.execute("SELECT * FROM BOD")
         filas = self.cursor.fetchall()
 
@@ -170,12 +198,78 @@ class Inventario:                               #def inventario en sqlite
             fecha_vencimiento=date.fromisoformat(fila[8]) if fila[8] else None,
             agotado=bool(fila[11]),
             stock_minimo=fila[10],
-            proveedor=fila[9]
             
         )
-        self.productos.append(producto)
+        self.productos.append(producto) 
 
-class Interfaz:                                                    #INTERFAZZZZZZZZZZZZZZZZZZZZZZZZZZZ
+    def registrar_movimientos(self, movimiento: Movimiento): # actualiza el stock del producto, guarda movimiento en la lista
+        producto = movimiento.producto
+        if movimiento.tipo == "entrada":
+            producto.actualizar_stock(movimiento.cantidad)
+
+        elif movimiento.tipo == "salida":
+            if producto.cantidad < movimiento.cantidad:
+                print(f"Error: No hay suficiente stock para retirar {movimiento.cantidad} unidades de {producto.nombre}.") # En caso de que no haya x cantidad de productos para una salida
+                return False
+            producto.actualizar_stock(-movimiento.cantidad)
+        else:
+            raise ValueError ("Tipo de movimiento invalido (entrada/salida)")
+        
+        self.movimientos.append(movimiento)
+        return True
+
+    def buscar_producto(self, codigo: str) -> Optional[Producto]:
+        for producto in self.productos:
+            if producto.codigo == codigo:
+                return producto 
+            return None  
+
+
+    def ver_inventario(self): # Indica el inventario completo
+        if not self.productos:
+            return ("El inventario está vacío")
+        return "\n\n".join([producto.mostrar_info() for producto in self.productos])
+    
+    def productos_por_vencer(self) -> list[Producto]: # indica una lista de productos proximos a vencer en 8 dias 
+            proximos = []
+            for producto in self.productos:
+                if isinstance(producto, Ingrediente):
+                    dias = producto.dias_para_vencer()
+                    if dias is not None and 0 <= dias <= 8:
+                        proximos.append(producto)
+            return proximos
+
+    def generar_alertas(self) -> list[str]: # Genera avisos sobre los productos que estan a punto de agotarse segun el stock minimo y los productos vencidos 
+        avisos= []
+        for producto in self.productos:
+            if producto.verificar_stock_minimo():
+                 avisos.append(f"¡Alerta!: {producto.nombre} ({producto.codigo}) está por agotarse.")
+            if isinstance(producto, Ingrediente):
+                if not producto.se_puede_usar():
+                    avisos.append(f"¡Alerta!: {producto.nombre} ({producto.codigo}) está vencido.")
+        return avisos
+
+
+    def consultar_movimientos(self) -> list[Movimiento]: # Sencillamente, retorna la lista de movimientos guardados
+        return self.movimientos
+
+    def puede_prepararse(self, producto: Productofinal) -> bool:
+        for ingrediente, cantidad_requerida in producto.receta.items():
+            if ingrediente not in self.productos:
+                return False
+            if not ingrediente.se_puede_usar() or ingrediente.cantidad < cantidad_requerida:
+                return False
+        return True
+
+    def usar_ingredientes(self, producto: Productofinal, usuario: str, motivo: str): # Resta los ingredientes empleados para un prroducto final y registra el movimiento
+        if not self.puede_prepararse(producto):
+            raise ValueError("No se puede preparar la orden: ingredientes insuficientes o vencidos.")
+        for ingrediente, cantidad_requerida in producto.receta.items():
+            ingrediente.actualizar_stock(-cantidad_requerida)
+            movimiento = Movimiento("salida", ingrediente, cantidad_requerida, date.today(), usuario, motivo)
+            self.registrar_movimientos(movimiento)
+
+class Interfaz:              # Hay que corregir cositas                                      #INTERFAZZZZZZZZZZZZZZZZZZZZZZZZZZZ
     def __init__(self):
         self.inventario = Inventario()
         self.inventario.database() 
@@ -275,7 +369,7 @@ class Interfaz:                                                    #INTERFAZZZZZ
         pass
     def generar_alertas(self)-> list[str]:
         pass
-    def consultar_movimientos(self) -> list[Movimiento]:
+    def consultar_movimientos(self) -> list[Movimiento]: 
         pass
 class sistema:
     def __init__(self):
@@ -300,7 +394,9 @@ class sistema:
         pass
 
 
-app = Interfaz()
-app.ejecutar()
-i = Inventario()
-i.database()
+#app = Interfaz()
+#app.ejecutar()
+#i = Inventario()
+#i.database()
+
+
