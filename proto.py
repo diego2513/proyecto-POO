@@ -35,8 +35,8 @@ class RestaurantInventorySystem:
                 unidad TEXT NOT NULL,
                 precio_unitario REAL NOT NULL,
                 stock_minimo REAL NOT NULL,
-                fecha_vencimiento TEXT,
-                proveedor TEXT,
+                fecha_vencimiento TEXT NOT NULL,
+                proveedor TEXT NOT NULL,
                 fecha_actualizacion TEXT DEFAULT CURRENT_TIMESTAMP
             )
         ''')
